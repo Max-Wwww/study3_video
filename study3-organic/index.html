@@ -309,19 +309,7 @@
 
   </style>
 </head>
-<script>
-(function () {
-    // Capture the end event, including videos added after page load.
-    document.addEventListener("ended", function (event) {
-        if (event.target.tagName === "VIDEO") {
-            window.parent.postMessage(
-                { type: "study-video-ended" },
-                "https://surveys.rpi.edu"
-            );
-        }
-    }, true);
-})();
-</script>
+
 <body>
   <header class="topbar">
     <div class="logo" onclick="window.location.href='home.html'">
