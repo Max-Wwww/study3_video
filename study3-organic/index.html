@@ -311,16 +311,15 @@
 </head>
 <script>
 (function () {
-    var video = document.querySelector("video");
-
-    if (video) {
-        video.addEventListener("ended", function () {
+    // Capture the end event, including videos added after page load.
+    document.addEventListener("ended", function (event) {
+        if (event.target.tagName === "VIDEO") {
             window.parent.postMessage(
                 { type: "study-video-ended" },
                 "https://surveys.rpi.edu"
             );
-        });
-    }
+        }
+    }, true);
 })();
 </script>
 <body>
