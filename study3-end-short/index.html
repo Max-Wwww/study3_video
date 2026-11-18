@@ -593,5 +593,98 @@ if (videoParam) {
       editorPanel.style.display = "none";
     }
   </script>
+  <script>
+(function () {
+  const condition = "end-short";
+  const sponsorStart = 255;
+  const sponsorEnd = 290;
+
+  const video = document.getElementById("experimentVideo");
+  const playButton = document.getElementById("playPauseBtn");
+
+  if (!video || window.study3TrackingAdded) return;
+  window.study3TrackingAdded = true;
+
+  let videoStarted = false;
+  let sponsorStarted = false;
+  let sponsorEnded = false;
+  let buffering = false;
+
+  // Send a timing message to the surrounding Qualtrics page.
+  function sendMarker(name) {
+    window.parent.postMessage({
+      type: "STUDY3_VIDEO_EVENT",
+      event: name,
+      condition: condition,
+      mediaTime: video.currentTime
+    }, "https://surveys.rpi.edu");
+  }
+
+  // Check the video's position, rather than time since page load.
+  function checkSponsor(time) {
+    if (!videoStarted || video.paused || video.seeking) return;
+
+    if (!sponsorStarted &&
+        time >= sponsorStart &&
+        time < sponsorEnd) {
+      sponsorStarted = true;
+      sendMarker("SPONSOR_START");
+    }
+
+    if (sponsorStarted && !sponsorEnded && time >= sponsorEnd) {
+      sponsorEnded = true;
+      sendMarker("SPONSOR_END");
+    }
+  }
+
+  if (playButton) {
+    playButton.addEventListener("click", function () {
+      sendMarker("PLAY_CLICK");
+    }, true);
+  }
+
+  video.addEventListener("playing", function () {
+    if (!videoStarted) {
+      videoStarted = true;
+      sendMarker("VIDEO_START");
+    } else {
+      sendMarker("VIDEO_RESUME");
+    }
+
+    buffering = false;
+    checkSponsor(video.currentTime);
+  });
+
+  video.addEventListener("waiting", function () {
+    if (videoStarted && !video.ended && !buffering) {
+      buffering = true;
+      sendMarker("VIDEO_BUFFERING");
+    }
+  });
+
+  video.addEventListener("pause", function () {
+    if (videoStarted && !video.ended) {
+      sendMarker("VIDEO_PAUSE");
+    }
+  });
+
+  video.addEventListener("ended", function () {
+    sendMarker("VIDEO_END");
+  });
+
+  // Use video frames when supported, with a fallback.
+  if (typeof video.requestVideoFrameCallback === "function") {
+    function checkFrame(now, metadata) {
+      checkSponsor(metadata.mediaTime);
+      video.requestVideoFrameCallback(checkFrame);
+    }
+    video.requestVideoFrameCallback(checkFrame);
+  } else {
+    video.addEventListener("timeupdate", function () {
+      checkSponsor(video.currentTime);
+    });
+  }
+})();
+</script>
 </body>
 </html>
