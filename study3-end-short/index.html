@@ -622,6 +622,8 @@ if (videoParam) {
 
   // Check the video's position, rather than time since page load.
   function checkSponsor(time) {
+        // Organic videos have no sponsored segment.
+    if (sponsorStart === null || sponsorEnd === null) return;
     if (!videoStarted || video.paused || video.seeking) return;
 
     if (!sponsorStarted &&
